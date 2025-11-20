@@ -1,70 +1,104 @@
-<!DOCTYPE html>
+<?php
+require_once __DIR__ . '/lib/auth.php';
+
+$user = auth_current_user();
+require_once __DIR__ . '/lib/database.php';
+
+$conn = db_get_conn();
+$res = $conn->query('SELECT id, name, note FROM teachers ORDER BY id DESC');
+$teachers = [];
+if ($res) { while ($r = $res->fetch_assoc()) { $teachers[] = $r; } }
+
+?><!doctype html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>zaliczmnie.pl</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>lista vouchy</title>
+  <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-    <header>
-        <h1>Witaj na zaliczmnie.pl</h1>
-    </header>
-    <main>
-        <section>
-            <h2>O nas</h2>
-            <p>Jesteśmy platformą na której możesz znaleźć swoją wymarzoną panią do zaliczenia</p>
-        </section>
-        <?php
-        require_once __DIR__ . '/lib/auth.php';
-        $user = auth_current_user();
-        if ($user) {
-            echo '<p>Witaj, '.htmlspecialchars($user['username']).' | <a href="/index.php?logout=1">Wyloguj</a></p>';
-        } else {
-            echo '<p><a href="/login.php">Zaloguj</a> | <a href="/register.php">Zarejestruj</a></p>';
-        }
+  <header class="top">
+    <h1>zgłoś doświadczenie z nauczycielem</h1>
+    
+    <div class="user">
+      <?php if ($user): ?>
+        Zalogowany jako <strong><?=htmlspecialchars($user['username'])?></strong> — <a href="/logout.php">Wyloguj</a>
+      <?php else: ?>
+        <a href="/login.php">Zaloguj</a>
+      <?php endif; ?>
+    </div>
+  </header>
 
-        if (isset($_GET['logout'])) {
-            auth_logout(); header('Location: /'); exit;
-        }
+  <main>
+    <?php if (!empty($_SESSION['flash'])): ?>
+     <script>
+       alert("<?= $_SESSION['flash'] ?>");
+        <?php unset($_SESSION['flash']); ?>
+     </script>
+    <?php endif; ?>
+    <?php if (count($teachers) === 0): ?>
+      <p class="empty">Brak nauczycieli. Administrator może dodać nowych w panelu admin.</p>
+    <?php else: ?>
 
-        $conn = db_get_conn();
-        $res = $conn->query('SELECT g.id, g.name, g.description, COUNT(gu.user_id) AS hits FROM girls g LEFT JOIN girl_user gu ON gu.girl_id = g.id GROUP BY g.id ORDER BY g.id');
-        echo '<h2>Lista dziewczyn</h2>';
-        echo '<ul>';
-        while ($row = $res->fetch_assoc()) {
-            $gid = (int)$row['id'];
-            $name = htmlspecialchars($row['name']);
-            $desc = htmlspecialchars($row['description'] ?? '');
-            $hits = (int)$row['hits'];
-            $has = false;
-            if ($user) {
-                $stmt = $conn->prepare('SELECT 1 FROM girl_user WHERE girl_id = ? AND user_id = ? LIMIT 1');
-                $stmt->bind_param('ii', $gid, $user['id']);
-                $stmt->execute();
-                $stmt->store_result();
-                $has = $stmt->num_rows > 0;
-                $stmt->close();
-            }
-            echo '<li><strong>'.$name.'</strong> — '.$desc.' (' . $hits . ' zaliczeń) ';
-            if ($user) {
-                if ($has) {
-                    echo '<em>Już zaliczyłeś</em>';
-                } else {
-                    echo '<form method="post" action="/zalicz.php" style="display:inline;"><input type="hidden" name="girl_id" value="'.$gid.'"><button type="submit">Zaliczyć</button></form>';
-                }
-            } else {
-                echo '<a href="/login.php">Zaloguj, aby zaliczyć</a>';
-            }
-            echo '</li>';
-        }
-        echo '</ul>';
 
-        if ($user && !empty($user['is_admin'])) {
-            echo '<p><a href="/admin/admin.php">Panel admina</a></p>';
-        }
-        ?>
-    </main>
+      <section class="cases">
+        <?php foreach ($teachers as $row): ?>
+          <?php
+            $teacher_id = (int)$row['id'];
+            $vcount = 0;
+            $r2 = $conn->query("SELECT COUNT(*) AS c FROM vouches WHERE teacher_id = " . $teacher_id);
+            if ($r2) { $rc = $r2->fetch_assoc(); $vcount = (int)($rc['c'] ?? 0); }
+            $opinions = [];
+            $r3 = $conn->query("SELECT v.opinion, u.username, v.created_at FROM vouches v LEFT JOIN users u ON u.id = v.user_id WHERE v.teacher_id = " . $teacher_id . " ORDER BY v.created_at DESC LIMIT 10");
+            if ($r3) { while ($ro = $r3->fetch_assoc()) { $opinions[] = $ro; } }
+          ?>
+          <article class="case" id="teacher-<?= $teacher_id ?>">
+            <h2><?= htmlspecialchars($row['name']) ?></h2>
+            <p><?= nl2br(htmlspecialchars($row['note'])) ?></p>
+            <div class="actions">
+              <?php if ($user): ?>
+                <form method="post" action="/vouch.php" class="vouch-form">
+                  <input type="hidden" name="teacher_id" value="<?= $teacher_id ?>">
+                  <textarea name="opinion" required placeholder="Krótka opinia"></textarea>
+                  <button type="submit" class="vouch-btn">Dodaj opinię</button>
+                </form>
+              <?php else: ?>
+                <a href="/login.php">Zaloguj, aby dodać opinię</a>
+              <?php endif; ?>
+              <div class="vouch-count"><?= $vcount ?>  <?= $vcount === 1 ? 'opinia' : (($vcount % 10 >= 2 && $vcount % 10 <= 4) ? 'opinie' : 'opinii') ?></div>
+            </div>
+            <div class="opinions">
+              <?php if (count($opinions) === 0): ?>
+                <em>Brak opinii</em>
+              <?php else: ?>
+                <?php foreach ($opinions as $i => $o): ?>
+                  <?php if ($i === 0): ?>
+                  <table class="opinions-table">
+                    <thead>
+                    <tr><th>Użytkownik</th><th>Opinia</th><th>Czas</th></tr>
+                    </thead>
+                    <tbody>
+                  <?php endif; ?>
+                    <tr>
+                      <td><?= htmlspecialchars($o['username'] ?? '') ?></td>
+                      <td><?= nl2br(htmlspecialchars($o['opinion'] ?? '')) ?></td>
+                      <td class="time"><?= htmlspecialchars($o['created_at'] ?? '') ?></td>
+                    </tr>
+                  <?php if ($i === count($opinions) - 1): ?>
+                    </tbody>
+                  </table>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      </section>
+    <?php endif; ?>
+
+   
+  </main>
+
 </body>
-</html>
 </html>

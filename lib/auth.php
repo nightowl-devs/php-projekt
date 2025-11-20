@@ -42,14 +42,14 @@ function auth_current_user(): ?array
 function auth_login(string $username, string $password): bool
 {
     $conn = db_get_conn();
-    $stmt = $conn->prepare('SELECT id, password_hash FROM users WHERE username = ? LIMIT 1');
+    $stmt = $conn->prepare('SELECT id, password_hash, is_admin FROM users WHERE username = ? LIMIT 1');
     if (!$stmt) {
         error_log('auth_login prepare failed: ' . $conn->error);
         return false;
     }
     $stmt->bind_param('s', $username);
     $stmt->execute();
-    $stmt->bind_result($id, $hash);
+    $stmt->bind_result($id, $hash, $is_admin);
     if (!$stmt->fetch()) {
         $stmt->close();
         return false;
@@ -60,7 +60,7 @@ function auth_login(string $username, string $password): bool
     }
     session_regenerate_id(true);
     $_SESSION['user_id'] = (int) $id;
-    $_SESSION['user'] = ['id' => (int) $id, 'username' => $username];
+    $_SESSION['user'] = ['id' => (int) $id, 'username' => $username, 'is_admin'=> (bool) $is_admin];
     return true;
 }
 

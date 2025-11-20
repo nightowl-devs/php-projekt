@@ -1,30 +1,59 @@
 <?php
 require_once __DIR__ . '/lib/auth.php';
+require_once __DIR__ . '/lib/database.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+}
+
+$error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    if ($username === '' || $password === '') {
-        $error = 'Wypełnij wszystkie pola';
-    } else {
-        if (auth_create_user($username, $password)) {
-            header('Location: /login.php'); exit;
+        $u = trim((string)($_POST['username'] ?? ''));
+        $p = (string)($_POST['password'] ?? '');
+        if ($u === '' || $p === '') {
+                $error = 'Proszę podać nazwę użytkownika i hasło.';
+        } else {
+                $ok = auth_create_user($u, $p);
+                if ($ok) {
+                        $_SESSION['flash'] = 'Konto utworzone. Możesz się teraz zalogować.';
+                        header('Location: /login.php');
+                        exit;
+                } else {
+                        $error = 'Nie udało się utworzyć konta (nazwa może być zajęta).';
+                }
         }
-        $error = 'Rejestracja nie powiodła się (użytkownik może już istnieć)';
-    }
 }
 ?>
 <!doctype html>
 <html lang="pl">
-<head><meta charset="utf-8"><title>Rejestracja</title></head>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Register</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
 <body>
-<h1>Zarejestruj się</h1>
-<?php if (!empty($error)) echo '<p style="color:red;">'.htmlspecialchars($error).'</p>'; ?>
-<form method="post">
-  <label>Username: <input name="username" required></label><br>
-  <label>Password: <input name="password" type="password" required></label><br>
-  <button type="submit">Zarejestruj</button>
-</form>
-<p>Masz już konto? <a href="/login.php">Zaloguj się</a></p>
+    <main class="login">
+        <h1>Zarejestruj się</h1>
+        <?php
+        if ($error !== '') {
+                echo '<p class="error">' . htmlspecialchars($error) . '</p>';
+        }
+        ?>
+        <form method="post" action="/register.php">
+            <div>
+                <label for="username">Nazwa użytkownika</label><br>
+                <input id="username" name="username" required>
+            </div>
+            <div>
+                <label for="password">Hasło</label><br>
+                <input id="password" name="password" type="password" required>
+            </div>
+            <div style="margin-top:.5rem">
+                <button type="submit">Utwórz konto</button>
+            </div>
+        </form>
+        <p><a href="/login.php">Powrót do logowania</a></p>
+    </main>
 </body>
 </html>
