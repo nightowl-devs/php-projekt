@@ -3,7 +3,7 @@ require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/database.php';
 auth_require_login('/login.php');
 $user = auth_current_user();
-if (!$user || empty($user['is_admin'])) { echo "cwel"; exit; }
+if (!$user || empty($user['is_admin'])) { echo "Brak dostępu"; exit; }
 
 $conn = db_get_conn();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -16,21 +16,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $res = $conn->query('SELECT v.id, v.opinion, v.created_at, u.username, t.name AS teacher FROM vouches v LEFT JOIN users u ON u.id = v.user_id LEFT JOIN teachers t ON t.id = v.teacher_id ORDER BY v.created_at DESC');
-?><!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Opinie</title><link rel="stylesheet" href="/assets/styles.css"></head><body>
-<main>
-  <h1>Opinie / vouches</h1>
+?><!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Panel Admin - Opinie</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<header class="bg-white border-b sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <h1 class="text-xl font-semibold">Panel Administracyjny</h1>
+    <div class="text-sm text-gray-500">Zalogowany jako <strong class="text-blue-600"><?=htmlspecialchars($user['username'])?></strong> <a href="/logout.php" class="ml-3 text-gray-700">Wyloguj</a></div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+  <div class="admin-header">
+    <h1>Zarządzaj opiniami</h1>
+    <nav>
+      <a href="/admin/teachers.php">👨‍🏫 Nauczyciele</a>
+      <a href="/admin/users.php">👥 Użytkownicy</a>
+      <a href="/admin/opinions.php">💭 Opinie</a>
+      <a href="/">← Powrót do listy</a>
+    </nav>
+  </div>
+
   <?php if ($res && $res->num_rows): ?>
-    <ul>
+    <ul class="space-y-4">
     <?php while ($o = $res->fetch_assoc()): ?>
-      <li>
-        <strong><?=htmlspecialchars($o['username'] ?? 'anon')?></strong> on <em><?=htmlspecialchars($o['teacher'] ?? '')?></em>: <?=nl2br(htmlspecialchars($o['opinion']))?>
-        <form method="post" style="display:inline">
-          <button name="delete_op" value="<?= (int)$o['id'] ?>">Usuń</button>
-        </form>
+      <li class="border rounded bg-white p-4">
+        <div class="flex justify-between items-start gap-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <strong class="text-gray-900"><?=htmlspecialchars($o['username'] ?? 'Anonimowy')?></strong>
+              <span class="text-gray-400 text-sm"> o </span>
+              <em class="text-gray-700"><?=htmlspecialchars($o['teacher'] ?? 'Brak')?></em>
+            </div>
+            <p class="text-sm text-gray-600 mt-2"><?=nl2br(htmlspecialchars($o['opinion']))?></p>
+            <div class="text-xs text-gray-400 mt-2"><?=htmlspecialchars($o['created_at'])?></div>
+          </div>
+          <form method="post" class="inline-block flex-shrink-0">
+            <button name="delete_op" value="<?= (int)$o['id'] ?>" class="px-3 py-1 rounded bg-red-600 text-white text-sm">Usuń</button>
+          </form>
+        </div>
       </li>
     <?php endwhile; ?>
     </ul>
   <?php else: ?>
-    <p>Brak opinii.</p>
+    <p class="empty">Brak opinii.</p>
   <?php endif; ?>
-</main></body></html>
+</main>
+</body>
+</html>

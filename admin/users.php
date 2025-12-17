@@ -3,7 +3,7 @@ require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/database.php';
 auth_require_login('/login.php');
 $user = auth_current_user();
-if (!$user || empty($user['is_admin'])) { echo "gryz go golden"; exit; }
+if (!$user || empty($user['is_admin'])) { echo "Brak dostępu"; exit; }
 
 $conn = db_get_conn();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['delete_user'])) {
@@ -14,24 +14,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['delete_user'])) {
 }
 
 $res = $conn->query('SELECT id, username, is_admin, created_at FROM users ORDER BY id DESC');
-?><!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Users</title><link rel="stylesheet" href="../assets/styles.css">
+?><!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Panel Admin - Użytkownicy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<header class="bg-white border-b sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <h1 class="text-xl font-semibold">Panel Administracyjny</h1>
+    <div class="text-sm text-gray-500">Zalogowany jako <strong class="text-blue-600"><?=htmlspecialchars($user['username'])?></strong> <a href="/logout.php" class="ml-3 text-gray-700">Wyloguj</a></div>
+  </div>
+</header>
 
-</head><body>
-<main>
-  <h1>Użytkownicy</h1>
+<main class="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+  <div class="admin-header">
+    <h1>Zarządzaj użytkownikami</h1>
+    <nav>
+      <a href="/admin/teachers.php">👨‍🏫 Nauczyciele</a>
+      <a href="/admin/users.php">👥 Użytkownicy</a>
+      <a href="/">← Powrót do listy</a>
+    </nav>
+  </div>
+
   <?php if ($res && $res->num_rows): ?>
-    <table>
-      <thead><tr><th>ID</th><th>username</th><th>admin</th><th>created</th><th></th></tr></thead>
-      <tbody>
+    <div class="overflow-x-auto bg-white border rounded-md">
+      <table class="min-w-full divide-y divide-gray-100">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="p-3 w-16 text-left">ID</th>
+          <th class="p-3 text-left">Nazwa użytkownika</th>
+          <th class="p-3 w-20 text-left">Admin</th>
+          <th class="p-3 text-left">Data rejestracji</th>
+          <th class="p-3 w-24 text-left">Akcja</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
       <?php while ($u = $res->fetch_assoc()): ?>
         <tr>
-          <td><?= (int)$u['id'] ?></td>
-          <td><?= htmlspecialchars($u['username']) ?></td>
-          <td><?= $u['is_admin'] ? 'pewnie taaaaaa' : 'pewnie nieeeee' ?></td>
-          <td><?= htmlspecialchars($u['created_at']) ?></td>
-          <td>
-            <form method="post" style="display:inline">
-              <button name="delete_user" value="<?= (int)$u['id'] ?>">Usuń</button>
+          <td class="p-3"><?= (int)$u['id'] ?></td>
+          <td class="p-3">
+            <strong class="text-gray-900"><?= htmlspecialchars($u['username']) ?></strong>
+            <?php if ($u['is_admin']): ?>
+              <span class="inline-block bg-blue-600 text-white px-2 py-0.5 text-xs font-semibold rounded ml-2">ADMIN</span>
+            <?php endif; ?>
+          </td>
+          <td class="p-3"><?= $u['is_admin'] ? '✓' : '✗' ?></td>
+          <td class="p-3"><?= htmlspecialchars($u['created_at']) ?></td>
+          <td class="p-3">
+            <form method="post" class="inline-block">
+              <button name="delete_user" value="<?= (int)$u['id'] ?>" class="px-3 py-1 rounded bg-red-600 text-white text-sm">Usuń</button>
             </form>
           </td>
         </tr>
@@ -39,6 +74,8 @@ $res = $conn->query('SELECT id, username, is_admin, created_at FROM users ORDER 
       </tbody>
     </table>
   <?php else: ?>
-    <p>Brak użytkowników.</p>
+    <p class="empty">Brak użytkowników.</p>
   <?php endif; ?>
-</main></body></html>
+</main>
+</body>
+</html>

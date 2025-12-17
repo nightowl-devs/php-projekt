@@ -27,11 +27,12 @@ if ($opinion === '') {
 }
 
 $conn = db_get_conn();
-$stmt = $conn->prepare('INSERT INTO vouches (teacher_id, user_id, opinion) VALUES (?, ?, ?)');
+$stmt = $conn->prepare('INSERT INTO vouches (teacher_id, user_id, opinion, is_anonymous) VALUES (?, ?, ?, ?)');
 if ($stmt) {
     $uid = (int)$user['id'];
-    $stmt->bind_param('iis', $teacher_id, $uid, $opinion);
-    $stmt->execute();
+    $is_anonymous = isset($_POST['is_anonymous']) ? (int)$_POST['is_anonymous'] : 0;
+    $stmt->bind_param('iisi', $teacher_id, $uid, $opinion, $is_anonymous);
+    $stmt->execute();   
     $stmt->close();
     if (session_status() === PHP_SESSION_NONE) session_start();
     $_SESSION['flash'] = 'Dziękujemy za opinię.';
