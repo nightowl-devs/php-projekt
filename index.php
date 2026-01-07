@@ -16,106 +16,95 @@ if ($res) { while ($r = $res->fetch_assoc()) { $teachers[] = $r; } }
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Opinie o nauczycielach</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="/assets/logo.svg">
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-  <header class="bg-white border-b sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-semibold">Opinie o nauczycielach</h1>
-      <div class="user flex items-center gap-4 text-sm text-gray-500">
+  <header class="site-header sticky top-0 z-50">
+    <div class="container">
+      <div class="logo">
+        <a href="/"><img src="/assets/logo.svg" alt="logo"></a>
+        <div>
+          <div class="brand-title">Opinie o nauczycielach</div>
+          <div class="muted text-sm">Serwis opinii uczniów</div>
+        </div>
+      </div>
+      <div class="user nav-links flex items-center gap-4 text-sm text-gray-500">
       <?php if ($user): ?>
         <span>Zalogowany jako <strong><?=htmlspecialchars($user['username'])?></strong></span>
-        <a href="/logout.php">Wyloguj</a>
+        <a href="/logout.php" class="px-2">Wyloguj</a>
       <?php else: ?>
-        <a href="/login.php">Zaloguj się</a> / <a href="/register.php">Zarejestruj</a>
+        <a href="/login.php">Zaloguj się</a>
+        <a href="/register.php" class="btn-primary">Zarejestruj</a>
       <?php endif; ?>
       </div>
     </div>
   </header>
 
-  <section class="bg-gradient-to-br from-gray-900 to-gray-700 text-white py-20">
-    <div class="max-w-4xl mx-auto px-4 text-center">
-      <h1 class="text-4xl md:text-5xl font-bold leading-tight">Podziel się swoją opinią</h1>
-      <p class="text-gray-200 mt-3 text-lg">Pomóż innym uczniom poprzez recenzje swoich nauczycieli. Twój feedback ma znaczenie.</p>
+  <section class="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-16">
+    <div class="container text-center">
+      <h1 class="text-3xl md:text-4xl font-bold">Podziel się swoją opinią o nauczycielach</h1>
+      <p class="mt-3 text-blue-100 text-lg">Przeglądaj opinie, dodawaj własne i pomagaj innym uczniom wybierać najlepszych nauczycieli.</p>
+      <div class="mt-6 max-w-2xl mx-auto">
+        <form method="get" action="/" class="flex items-center gap-2">
+          <input name="q" type="text" placeholder="Szukaj nauczyciela, przedmiotu..." class="p-3 rounded-l-md border-0 w-full" />
+          <button type="submit" class="btn-primary rounded-r-md">Szukaj</button>
+        </form>
+      </div>
     </div>
   </section>
 
-  <main class="max-w-7xl mx-auto px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 py-8">
+  <main class="container grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 py-10">
     <?php if (!empty($_SESSION['flash'])): ?>
-     <script>
-       alert("<?= $_SESSION['flash'] ?>");
+      <div class="card p-4 mb-4">
+        <?= htmlspecialchars($_SESSION['flash']) ?>
         <?php unset($_SESSION['flash']); ?>
-     </script>
+      </div>
     <?php endif; ?>
-    <?php if (count($teachers) === 0): ?>
-      <p class="text-gray-500 p-4 bg-gray-50 border border-gray-200 rounded">Brak nauczycieli. Administrator może dodać nowych w panelu admin.</p>
-    <?php else: ?>
 
-
-      <section class="grid gap-6">
+    <section>
+      <?php if (count($teachers) === 0): ?>
+        <div class="card p-6">Brak nauczycieli. Administrator może dodać nowych w panelu admin.</div>
+      <?php else: ?>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <?php foreach ($teachers as $row): ?>
-          <?php
-            $teacher_id = (int)$row['id'];
-            $vcount = 0;
-            $r2 = $conn->query("SELECT COUNT(*) AS c FROM vouches WHERE teacher_id = " . $teacher_id);
-            if ($r2) { $rc = $r2->fetch_assoc(); $vcount = (int)($rc['c'] ?? 0); }
-            $opinions = [];
-            $r3 = $conn->query("SELECT v.opinion, u.username, v.created_at, v.is_anonymous FROM vouches v LEFT JOIN users u ON u.id = v.user_id WHERE v.teacher_id = " . $teacher_id . " ORDER BY v.created_at DESC LIMIT 10");
-            if ($r3) { while ($ro = $r3->fetch_assoc()) { $opinions[] = $ro; } }
-          ?>
-          <article class="bg-white border rounded-lg p-6 shadow-sm hover:shadow-lg transition" id="teacher-<?= $teacher_id ?>">
-            <h2 class="text-lg font-semibold text-gray-900"><?= htmlspecialchars($row['name']) ?></h2>
-            <p class="text-gray-600 mt-2"><?= nl2br(htmlspecialchars($row['note'])) ?></p>
-            <div class="mt-4 flex items-center justify-between gap-4">
-              <div class="text-sm text-gray-500">📊 <span><?= $vcount ?>  <?= $vcount === 1 ? 'opinia' : (($vcount % 10 >= 2 && $vcount % 10 <= 4) ? 'opinie' : 'opinii') ?></span></div>
-            </div>
-            <div class="flex flex-col md:flex-row gap-4">
-              <?php if ($user): ?>
-                <form method="post" action="/vouch.php" class="flex flex-col gap-3 w-full">
-                  <input type="hidden" name="teacher_id" value="<?= $teacher_id ?>">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="is_anonymous" name="is_anonymous" value="1">
-                  <label for="is_anonymous" class="text-sm text-gray-600">Dodaj opinię anonimowo</label>
-                </div>
-                  <textarea name="opinion" required placeholder="Udostępnij swoją opinię..." class="w-full min-h-[80px] p-3 border rounded bg-gray-50 text-gray-900" ></textarea>
-                  <button type="submit" class="inline-block self-start bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700">Podziel się opinią</button>
-                </form>
-              <?php else: ?>
-                <div class="text-sm text-gray-500"> <a href="/login.php" class="text-blue-600 font-semibold">Zaloguj się</a>, aby dodać opinię</div>
-              <?php endif; ?>
-            </div>
-            <div class="opinions">
-              <?php if (count($opinions) === 0): ?>
-                <em class="text-gray-500">Brak opinii</em>
-              <?php else: ?>
-                <?php foreach ($opinions as $i => $o): ?>
-                  <?php if ($i === 0): ?>
-                  <div class="overflow-x-auto mt-3">
-                  <table class="w-full table-auto border-collapse">
-                    <thead class="bg-gray-50 text-sm text-gray-600">
-                    <tr><th class="p-3 text-left">Użytkownik</th><th class="p-3 text-left">Opinia</th><th class="p-3 text-left">Data</th></tr>
-                    </thead>
-                    <tbody>
-                  <?php endif; ?>
-                    <tr class="border-t">
-                      <td class="p-3 text-sm text-gray-800"><?= $o['is_anonymous'] == 1 ? 'Anonimowy' : htmlspecialchars($o['username'] ?? 'Anonimowy') ?></td>
-                      <td class="p-3 text-sm text-gray-600"><?= nl2br(htmlspecialchars($o['opinion'] ?? '')) ?></td>
-                      <td class="p-3 text-xs text-gray-400"><?= htmlspecialchars($o['created_at'] ?? '') ?></td>
-                    </tr>
-                  <?php if ($i === count($opinions) - 1): ?>
-                    </tbody>
-                  </table>
-                  </div>
-                  <?php endif; ?>
-                <?php endforeach; ?>
-              <?php endif; ?>
-            </div>
-          </article>
-        <?php endforeach; ?>
-        </section>
-    <?php endif; ?>
+            <?php
+              $teacher_id = (int)$row['id'];
+              $vcount = 0;
+              $r2 = $conn->query("SELECT COUNT(*) AS c FROM vouches WHERE teacher_id = " . $teacher_id);
+              if ($r2) { $rc = $r2->fetch_assoc(); $vcount = (int)($rc['c'] ?? 0); }
+            ?>
+            <article class="card p-5" id="teacher-<?= $teacher_id ?>">
+              <h3 class="text-lg font-semibold mb-2"><?= htmlspecialchars($row['name']) ?></h3>
+              <p class="text-sm muted mb-4"><?= nl2br(htmlspecialchars($row['note'])) ?></p>
+              <div class="flex items-center justify-between">
+                <div class="muted text-sm">📊 <?= $vcount ?> <?= $vcount === 1 ? 'opinia' : 'opinii' ?></div>
+                <a href="#teacher-<?= $teacher_id ?>" class="text-sm btn-primary px-3 py-1">Szczegóły</a>
+              </div>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </section>
 
-   
+    <aside class="sticky top-24">
+      <div class="card p-4 mb-4">
+        <h4 class="font-semibold">Dodaj opinię</h4>
+        <p class="muted text-sm mt-2">Zaloguj się, aby dodać opinię o nauczycielu.</p>
+        <div class="mt-4">
+          <?php if ($user): ?>
+            <a href="#" class="btn-primary w-full inline-block text-center">Dodaj opinię</a>
+          <?php else: ?>
+            <a href="/login.php" class="btn-primary w-full inline-block text-center">Zaloguj się</a>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <h4 class="font-semibold">Statystyki</h4>
+        <div class="mt-3 text-sm muted">Ilość nauczycieli: <strong><?= count($teachers) ?></strong></div>
+      </div>
+    </aside>
   </main>
 
 </body>

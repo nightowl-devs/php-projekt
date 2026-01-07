@@ -20,13 +20,20 @@ $res = $conn->query('SELECT id, username, is_admin, created_at FROM users ORDER 
   <meta charset="utf-8">
   <title>Panel Admin - Użytkownicy</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="/assets/logo.svg">
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-<header class="bg-white border-b sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-    <h1 class="text-xl font-semibold">Panel Administracyjny</h1>
-    <div class="text-sm text-gray-500">Zalogowany jako <strong class="text-blue-600"><?=htmlspecialchars($user['username'])?></strong> <a href="/logout.php" class="ml-3 text-gray-700">Wyloguj</a></div>
+<header class="site-header sticky top-0 z-50">
+  <div class="container">
+    <div class="logo">
+      <a href="/admin/"><img src="/assets/logo.svg" alt="logo"></a>
+      <div>
+        <div class="brand-title">Panel Administracyjny</div>
+        <div class="muted text-sm">Zarządzanie użytkownikami</div>
+      </div>
+    </div>
+    <div class="text-sm nav-links">Zalogowany jako <strong class="text-blue-600"><?=htmlspecialchars($user['username'])?></strong> <a href="/logout.php" class="ml-3">Wyloguj</a></div>
   </div>
 </header>
 
@@ -66,7 +73,7 @@ $res = $conn->query('SELECT id, username, is_admin, created_at FROM users ORDER 
           <td class="p-3"><?= htmlspecialchars($u['created_at']) ?></td>
           <td class="p-3">
             <form method="post" class="inline-block">
-              <button name="delete_user" value="<?= (int)$u['id'] ?>" class="px-3 py-1 rounded bg-red-600 text-white text-sm">Usuń</button>
+              <button name="delete_user" value="<?= (int)$u['id'] ?>" class="px-3 py-1 rounded bg-red-600 text-white text-sm hover:bg-red-700 transition">Usuń</button>
             </form>
           </td>
         </tr>

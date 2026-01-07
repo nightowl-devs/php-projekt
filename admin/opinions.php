@@ -22,13 +22,20 @@ $res = $conn->query('SELECT v.id, v.opinion, v.created_at, u.username, t.name AS
   <meta charset="utf-8">
   <title>Panel Admin - Opinie</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="/assets/logo.svg">
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-<header class="bg-white border-b sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-    <h1 class="text-xl font-semibold">Panel Administracyjny</h1>
-    <div class="text-sm text-gray-500">Zalogowany jako <strong class="text-blue-600"><?=htmlspecialchars($user['username'])?></strong> <a href="/logout.php" class="ml-3 text-gray-700">Wyloguj</a></div>
+<header class="site-header sticky top-0 z-50">
+  <div class="container">
+    <div class="logo">
+      <a href="/admin/"><img src="/assets/logo.svg" alt="logo"></a>
+      <div>
+        <div class="brand-title">Panel Administracyjny</div>
+        <div class="muted text-sm">Zarządzanie opiniami</div>
+      </div>
+    </div>
+    <div class="text-sm nav-links">Zalogowany jako <strong class="text-blue-600"><?=htmlspecialchars($user['username'])?></strong> <a href="/logout.php" class="ml-3">Wyloguj</a></div>
   </div>
 </header>
 
@@ -46,7 +53,7 @@ $res = $conn->query('SELECT v.id, v.opinion, v.created_at, u.username, t.name AS
   <?php if ($res && $res->num_rows): ?>
     <ul class="space-y-4">
     <?php while ($o = $res->fetch_assoc()): ?>
-      <li class="border rounded bg-white p-4">
+      <li class="card p-4">
         <div class="flex justify-between items-start gap-4">
           <div class="flex-1">
             <div class="flex items-center gap-2">
@@ -58,7 +65,7 @@ $res = $conn->query('SELECT v.id, v.opinion, v.created_at, u.username, t.name AS
             <div class="text-xs text-gray-400 mt-2"><?=htmlspecialchars($o['created_at'])?></div>
           </div>
           <form method="post" class="inline-block flex-shrink-0">
-            <button name="delete_op" value="<?= (int)$o['id'] ?>" class="px-3 py-1 rounded bg-red-600 text-white text-sm">Usuń</button>
+            <button name="delete_op" value="<?= (int)$o['id'] ?>" class="px-3 py-1 rounded bg-red-600 text-white text-sm hover:bg-red-700 transition">Usuń</button>
           </form>
         </div>
       </li>

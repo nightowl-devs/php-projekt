@@ -16,7 +16,7 @@ function db_get_conn()
         $conn = null;
     }
     global $db, $user, $pass, $host;
-    $conn = new mysqli(hostname: $host, "myuser", $pass, $db);
+    $conn = new mysqli("db", "myuser", "mypassword", $db);
     if ($conn->connect_errno) {
         error_log('DB connect failed: ' . $conn->connect_error);
         throw new RuntimeException('Database connection error');

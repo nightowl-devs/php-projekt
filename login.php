@@ -20,10 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Logowanie</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="/assets/logo.svg">
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-  <main class="max-w-md mx-auto mt-20 p-8 bg-white rounded-lg shadow">
+  <main class="card max-w-md mx-auto mt-20 p-8">
     <h1 class="text-2xl font-semibold mb-4">Logowanie</h1>
     <?php
     if (!empty($_SESSION['flash'])) {
@@ -45,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input id="password" name="password" type="password" placeholder="Wpisz hasło" required class="mt-1 block w-full p-2 border rounded bg-gray-50" />
       </div>
       <div>
-        <input type="submit" value="Zaloguj się" class="w-full py-2 px-4 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700" />
+        <input type="submit" value="Zaloguj się" class="btn-primary w-full py-2" />
       </div>
     </form>
 
